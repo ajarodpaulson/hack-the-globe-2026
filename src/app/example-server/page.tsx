@@ -10,7 +10,7 @@ export default async function ServerExamplePage() {
         lat: 43.65107,
         lng: -79.347015,
         transcript:
-          "My name is Jane Smith and I live at 123 Main St. My phone number is 416-555-1234.",
+          "My name is Sarah Johnson and I'm 34 years old. I live at 456 Queen Street West, Toronto. I've been struggling to afford my medication since I lost my job at the warehouse last March. My doctor, Dr. Michael Chen, referred me to a food bank near my address. I've been feeling very anxious and my blood pressure has been high.",
       }),
     });
 
