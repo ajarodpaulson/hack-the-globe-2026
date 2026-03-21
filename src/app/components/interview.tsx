@@ -4,6 +4,37 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import dynamic from "next/dynamic";
 
 /* ------------------------------------------------------------------ */
+/*  Web Speech API type declarations (not in default TS lib.dom)       */
+/* ------------------------------------------------------------------ */
+interface ISpeechRecognition {
+    continuous: boolean;
+    interimResults: boolean;
+    lang: string;
+    onresult: ((event: ISpeechRecognitionEvent) => void) | null;
+    onerror: ((event: Event) => void) | null;
+    start: () => void;
+    stop: () => void;
+    abort: () => void;
+}
+
+interface ISpeechRecognitionEvent {
+    resultIndex: number;
+    results: {
+        length: number;
+        [index: number]: {
+            isFinal: boolean;
+            length: number;
+            [index: number]: { transcript: string; confidence: number };
+        };
+    };
+}
+
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
+type SpeechRecognition = ISpeechRecognition;
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
+type SpeechRecognitionEvent = ISpeechRecognitionEvent;
+
+/* ------------------------------------------------------------------ */
 /*  Dynamically import the map (Leaflet requires window / no SSR)      */
 /* ------------------------------------------------------------------ */
 const LocationPicker = dynamic(() => import("./LocationPicker"), {
@@ -131,10 +162,10 @@ export default function InterviewForm() {
     /* ---- speech-to-text ---- */
     const startSpeechRecognition = () => {
         const SpeechRecognitionAPI =
-            (window as unknown as Record<string, typeof window.SpeechRecognition>)
-                .SpeechRecognition ||
-            (window as unknown as Record<string, typeof window.SpeechRecognition>)
-                .webkitSpeechRecognition;
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            (window as any).SpeechRecognition ||
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            (window as any).webkitSpeechRecognition;
         if (!SpeechRecognitionAPI) return;
 
         const recognition = new SpeechRecognitionAPI();
