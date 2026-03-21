@@ -15,6 +15,8 @@ export type BiographicFactors = {
 
 export type GeographicData = {
   postalCodePrefix: string;
+  lat?: number;
+  lng?: number;
 };
 
 export type AnalyzedEncounter = {

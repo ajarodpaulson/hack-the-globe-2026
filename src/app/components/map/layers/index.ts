@@ -1,5 +1,5 @@
 import type { Layer } from '@deck.gl/core';
-import type { FsaAggregate, VisualizationType } from '@/lib/types';
+import type { AnalyzedEncounter, FsaAggregate, VisualizationType } from '@/lib/types';
 import { buildHeatmapLayer } from './heatmap';
 import { buildChoroplethLayer } from './choropleth';
 
@@ -14,10 +14,12 @@ export type LayerOptions = {
   onHover?: (info: HoverInfo) => void;
   /**
    * City of Vancouver local-area-boundary GeoJSON (opendata.vancouver.ca).
-   * Required for choropleth; ignored by other layer types.
+   * Required for choropleth; ignored by heatmap.
    * Each feature must have a `name` property matching the neighbourhood name.
    */
   neighborhoodGeoJson?: GeoJSON.FeatureCollection | null;
+  /** Raw encounter records — used by heatmap for actual lat/lng coordinates. */
+  encounters?: AnalyzedEncounter[];
 };
 
 type LayerBuilder = (data: FsaAggregate[], options: LayerOptions) => Layer[];

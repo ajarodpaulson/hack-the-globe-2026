@@ -38,8 +38,8 @@ export default function MapView() {
   const mapStyleUrl = MAP_STYLES.find((s) => s.id === mapStyleId)?.url ?? MAP_STYLES[0].url;
 
   const layers = useMemo(
-    () => LAYER_BUILDERS[vizType](aggregated, { onHover: setHover, neighborhoodGeoJson }),
-    [vizType, aggregated, neighborhoodGeoJson],
+    () => LAYER_BUILDERS[vizType](aggregated, { onHover: setHover, neighborhoodGeoJson, encounters }),
+    [vizType, aggregated, neighborhoodGeoJson, encounters],
   );
 
   const totalCount = useMemo(() => aggregated.reduce((s, d) => s + d.count, 0), [aggregated]);
@@ -66,6 +66,46 @@ export default function MapView() {
         onMapStyleChange={setMapStyleId}
         totalCount={totalCount}
       />
+
+      {/* Legend */}
+      <div
+        className="pointer-events-none absolute bottom-8 right-4 z-20 rounded-lg px-3 py-2 text-xs"
+        style={{
+          background: 'rgba(11, 29, 58, 0.88)',
+          border: '1px solid var(--gray-600)',
+          minWidth: 130,
+        }}
+      >
+        <p className="mb-1 font-semibold" style={{ color: 'var(--gray-300)' }}>
+          {vizType === 'heatmap' ? 'Encounter density' : 'Encounters per district'}
+        </p>
+        {vizType === 'heatmap' ? (
+          <div className="flex items-center gap-2">
+            <div
+              style={{
+                height: 8,
+                flex: 1,
+                borderRadius: 4,
+                background: 'linear-gradient(to right, rgba(65,182,196,0.5), rgba(127,205,187,0.5), rgba(255,237,160,0.5), rgba(253,174,97,0.5), rgba(252,78,42,0.5))',
+              }}
+            />
+            <span style={{ color: 'var(--gray-400)' }}>High</span>
+          </div>
+        ) : (
+          <div className="flex items-center gap-2">
+            <span style={{ color: 'var(--gray-400)' }}>None</span>
+            <div
+              style={{
+                height: 8,
+                flex: 1,
+                borderRadius: 4,
+                background: 'linear-gradient(to right, rgba(65,182,196,0.78), rgba(200,130,80,0.78), rgba(255,69,0,0.78))',
+              }}
+            />
+            <span style={{ color: 'var(--gray-400)' }}>High</span>
+          </div>
+        )}
+      </div>
 
       {hover && (
         <div

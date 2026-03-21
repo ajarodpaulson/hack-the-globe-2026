@@ -1,79 +1,64 @@
-import { GeoJsonLayer } from '@deck.gl/layers';
-import type { PickingInfo } from '@deck.gl/core';
+import { HeatmapLayer } from '@deck.gl/aggregation-layers';
 import type { FsaAggregate } from '@/lib/types';
 import type { LayerOptions } from './index';
-import { FSA_TO_NEIGHBORHOOD } from '@/lib/fsa-to-neighborhood';
+
+// Cyan → green → yellow → red
+const COLOR_RANGE: [number, number, number][] = [
+  [65,  182, 196],
+  [127, 205, 187],
+  [199, 233, 180],
+  [255, 237, 160],
+  [253, 174,  97],
+  [252,  78,  42],
+];
 
 /**
- * Heat color ramp — RGBA.
+ * Density heatmap using real street-level encounter coordinates.
  *
- * Zero-count neighbourhoods are fully transparent so the base map shows
- * through completely. Non-zero areas scale from faint teal to opaque red.
- * A gamma curve (^0.55) compresses the range so sparse areas are still
- * visible while the DTES hotspot clearly dominates.
- */
-function toHeatColor(count: number, max: number): [number, number, number, number] {
-  if (count === 0) return [0, 0, 0, 0];
-  const t = Math.pow(count / max, 0.55);
-  return [
-    Math.round( 65 + t * 190),   // R: 65 → 255
-    Math.round(182 - t * 113),   // G: 182 → 69
-    Math.round(196 - t * 196),   // B: 196 → 0
-    Math.round( 90 + t * 140),   // A: 90 → 230  (never fully opaque — map always readable)
-  ];
-}
-
-/** Roll FSA counts up to neighbourhood totals. */
-function toNeighbourhoodCounts(data: FsaAggregate[]): Map<string, number> {
-  const counts = new Map<string, number>();
-  for (const { fsa, count } of data) {
-    const hood = FSA_TO_NEIGHBORHOOD[fsa];
-    if (!hood) continue;
-    counts.set(hood, (counts.get(hood) ?? 0) + count);
-  }
-  return counts;
-}
-
-/**
- * Density heat map using the same real Vancouver neighbourhood boundaries
- * as the choropleth, styled as a continuous heat ramp instead of districts.
+ * Each encounter is plotted at its actual lat/lng (stored in geographicData).
+ * Falls back to FSA centroid lat/lng if coordinates are unavailable.
  *
- * Using real geographic boundaries is the only correct way to visualize
- * density on a city map — overlay grids (GridLayer, HeatmapLayer) impose
- * artificial geometry that ignores streets, blocks, and actual urban form.
- *
- * Visual differences from the choropleth:
- *  - No borders between neighbourhoods → reads as a smooth gradient
- *  - Zero-count areas fully transparent → base map unobstructed
- *  - Gamma-curved alpha → sparse areas visible, hot spots stand out
+ * The layer-level `opacity: 0.5` is a hard cap — even at maximum density the
+ * overlay is never more than 50% opaque, so the base map is always readable.
+ * This is the definitive fix: deck.gl applies `opacity` after all blending,
+ * so no amount of data concentration can push it past that ceiling.
  */
 export function buildHeatmapLayer(data: FsaAggregate[], options: LayerOptions) {
-  const { neighborhoodGeoJson, onHover } = options;
-  if (!neighborhoodGeoJson) return [];
+  const { encounters } = options;
 
-  const countByHood = toNeighbourhoodCounts(data);
-  const maxCount = Math.max(...countByHood.values(), 1);
+  // Build point array: prefer raw encounter coordinates, fall back to FSA centroids
+  type Point = { lat: number; lng: number };
+  let points: Point[];
+
+  if (encounters && encounters.length > 0) {
+    points = encounters
+      .map((e) => ({
+        lat: e.geographicData?.lat,
+        lng: e.geographicData?.lng,
+      }))
+      .filter((p): p is Point => p.lat != null && p.lng != null);
+  } else {
+    // Fallback: one point per FSA aggregate at FSA centroid
+    points = data
+      .filter((d) => d.lat != null && d.lng != null)
+      .flatMap((d) => Array.from({ length: d.count }, () => ({ lat: d.lat, lng: d.lng })));
+  }
+
+  if (points.length === 0) return [];
 
   return [
-    new GeoJsonLayer({
+    new HeatmapLayer<Point>({
       id: 'heatmap',
-      data: neighborhoodGeoJson,
-      pickable: true,
-      stroked: false,   // no borders — cleaner gradient read
-      filled: true,
-      getFillColor: (f: GeoJSON.Feature) => {
-        const name = f.properties?.name as string | undefined;
-        return toHeatColor(name ? (countByHood.get(name) ?? 0) : 0, maxCount);
-      },
-      updateTriggers: { getFillColor: [data] },
-      onHover: (info: PickingInfo<GeoJSON.Feature>) => {
-        if (!onHover) return;
-        const { object, x, y } = info;
-        if (!object) { onHover(null); return; }
-        const name = object.properties?.name as string | undefined;
-        if (!name) { onHover(null); return; }
-        onHover({ fsa: name, count: countByHood.get(name) ?? 0, x, y });
-      },
+      data: points,
+      getPosition: (d) => [d.lng, d.lat],
+      getWeight: 1,
+      colorRange: COLOR_RANGE,
+      radiusPixels: 45,
+      intensity: 0.6,
+      // Cut off the low-density fringe — only genuine hotspots render
+      threshold: 0.18,
+      // Hard cap: even at maximum density the overlay is only 22% opaque
+      opacity: 0.22,
     }),
   ];
 }
