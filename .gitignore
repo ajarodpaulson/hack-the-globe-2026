@@ -39,6 +39,9 @@ yarn-error.log*
 # claude code — local/personal settings (permissions, secrets)
 .claude/settings.local.json
 
+# brainstorming session files
+.superpowers/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts

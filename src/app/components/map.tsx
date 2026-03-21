@@ -1,1 +1,0 @@
-// This is a simple map component using Leaflet
