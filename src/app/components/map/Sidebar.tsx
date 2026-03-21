@@ -7,8 +7,8 @@ import type { MapMetric, VisualizationType } from '@/lib/types';
 type SidebarProps = {
   metric: MapMetric;
   onMetricChange: (m: MapMetric) => void;
-  selectedKey: string;
-  onKeyChange: (k: string) => void;
+  selectedKeys: string[];
+  onKeysChange: (keys: string[]) => void;
   vizType: VisualizationType;
   onVizTypeChange: (v: VisualizationType) => void;
   mapStyleId: string;
@@ -16,11 +16,35 @@ type SidebarProps = {
   totalCount: number;
 };
 
+const TEAL_ACTIVE = {
+  background: 'rgba(0,201,167,0.15)',
+  border: '1px solid rgba(0,201,167,0.5)',
+  color: 'var(--teal)',
+} as const;
+
+const GHOST = {
+  background: 'transparent',
+  border: '1px solid transparent',
+  color: 'var(--gray-300)',
+} as const;
+
+const CHIP_ACTIVE = {
+  background: 'rgba(0,201,167,0.2)',
+  border: '1px solid rgba(0,201,167,0.55)',
+  color: 'var(--teal)',
+} as const;
+
+const CHIP_IDLE = {
+  background: 'rgba(255,255,255,0.04)',
+  border: '1px solid rgba(255,255,255,0.1)',
+  color: 'var(--gray-300)',
+} as const;
+
 export function Sidebar({
   metric,
   onMetricChange,
-  selectedKey,
-  onKeyChange,
+  selectedKeys,
+  onKeysChange,
   vizType,
   onVizTypeChange,
   mapStyleId,
@@ -31,139 +55,176 @@ export function Sidebar({
 
   const filterKeys = METRIC_CONFIGS.find((m) => m.id === metric)?.keys ?? [];
 
+  function toggleKey(key: string) {
+    onKeysChange(
+      selectedKeys.includes(key)
+        ? selectedKeys.filter((k) => k !== key)
+        : [...selectedKeys, key],
+    );
+  }
+
+  const PANEL: React.CSSProperties = {
+    background: 'rgba(11, 29, 58, 0.94)',
+    backdropFilter: 'blur(20px)',
+    WebkitBackdropFilter: 'blur(20px)',
+    borderRight: '1px solid rgba(255,255,255,0.08)',
+  };
+
   return (
-    <div className="absolute top-4 left-4 z-10 flex items-start gap-1.5">
+    <div className="absolute top-0 left-0 bottom-0 z-10 flex">
       {open && (
-        <div
-          className="w-60 rounded-xl p-4 space-y-4 text-sm"
-          style={{
-            background: 'rgba(11, 29, 58, 0.92)',
-            backdropFilter: 'blur(16px)',
-            WebkitBackdropFilter: 'blur(16px)',
-            border: '1px solid rgba(255,255,255,0.1)',
-          }}
-        >
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: 'var(--gray-300)' }}>
+        <div className="flex flex-col w-60 h-full text-sm overflow-y-auto" style={PANEL}>
+
+          {/* ── Header ───────────────────────────────────────────────────── */}
+          <div className="px-4 pt-5 pb-3" style={{ borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
+            <p className="text-xs font-semibold uppercase tracking-widest mb-0.5" style={{ color: 'var(--teal)' }}>
               Community Pulse
             </p>
-            <p className="font-semibold" style={{ color: 'var(--white)' }}>
+            <p className="font-bold text-base leading-tight" style={{ color: 'var(--white)' }}>
               Vancouver Health Map
             </p>
           </div>
 
-          <SidebarSection label="Metric">
+          {/* ── Metric tabs ───────────────────────────────────────────────── */}
+          <div className="px-3 pt-4 pb-2">
+            <p className="text-xs uppercase tracking-widest mb-2" style={{ color: 'var(--gray-400)' }}>
+              View by
+            </p>
             <div className="flex flex-col gap-1">
-              {METRIC_CONFIGS.map(({ id, label }) => (
-                <button
-                  key={id}
-                  onClick={() => { onMetricChange(id); onKeyChange(''); }}
-                  className="rounded-lg px-3 py-1.5 text-left text-sm transition-colors"
-                  style={
-                    metric === id
-                      ? { background: 'rgba(0,201,167,0.15)', border: '1px solid rgba(0,201,167,0.4)', color: 'var(--teal)' }
-                      : { color: 'var(--gray-300)', border: '1px solid transparent' }
-                  }
-                >
-                  {label}
-                </button>
-              ))}
+              {METRIC_CONFIGS.map(({ id, label }) => {
+                const shortLabel = id === 'density' ? 'Encounter Density'
+                  : id === 'healthIssue' ? 'Health Issues'
+                  : 'Determinants';
+                return (
+                  <button
+                    key={id}
+                    onClick={() => onMetricChange(id)}
+                    className="rounded-lg px-3 py-2 text-left text-sm font-medium transition-colors"
+                    style={metric === id ? TEAL_ACTIVE : GHOST}
+                  >
+                    {shortLabel}
+                  </button>
+                );
+              })}
             </div>
-          </SidebarSection>
+          </div>
 
+          {/* ── Filter chips (only for health / determinant tabs) ─────────── */}
           {filterKeys.length > 0 && (
-            <SidebarSection label="Filter">
-              <select
-                value={selectedKey}
-                onChange={(e) => onKeyChange(e.target.value)}
-                className="w-full rounded-lg px-3 py-1.5 text-sm focus:outline-none"
-                style={{
-                  background: 'var(--navy-light)',
-                  border: '1px solid var(--gray-600)',
-                  color: 'var(--white)',
-                }}
-              >
-                <option value="">All</option>
-                {filterKeys.map(({ key, label }) => (
-                  <option key={key} value={key}>{label}</option>
-                ))}
-              </select>
-            </SidebarSection>
+            <div className="px-3 pt-3 pb-2" style={{ borderTop: '1px solid rgba(255,255,255,0.07)' }}>
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-xs uppercase tracking-widest" style={{ color: 'var(--gray-400)' }}>
+                  Filter
+                </p>
+                {selectedKeys.length > 0 && (
+                  <button
+                    onClick={() => onKeysChange([])}
+                    className="text-xs rounded px-1.5 py-0.5 transition-colors"
+                    style={{ color: 'var(--gray-400)', border: '1px solid rgba(255,255,255,0.1)' }}
+                  >
+                    Clear
+                  </button>
+                )}
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {filterKeys.map(({ key, label }) => {
+                  const active = selectedKeys.includes(key);
+                  return (
+                    <button
+                      key={key}
+                      onClick={() => toggleKey(key)}
+                      className="rounded-full px-2.5 py-1 text-xs font-medium transition-colors"
+                      style={active ? CHIP_ACTIVE : CHIP_IDLE}
+                    >
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
+              {selectedKeys.length === 0 && (
+                <p className="mt-2 text-xs" style={{ color: 'var(--gray-500)' }}>
+                  All — tap chips to narrow
+                </p>
+              )}
+            </div>
           )}
 
-          <SidebarSection label="Visualization">
-            <div className="flex gap-2">
+          {/* ── Spacer pushes the rest to the bottom ─────────────────────── */}
+          <div className="flex-1" />
+
+          {/* ── Visualization ────────────────────────────────────────────── */}
+          <div className="px-3 py-3" style={{ borderTop: '1px solid rgba(255,255,255,0.07)' }}>
+            <p className="text-xs uppercase tracking-widest mb-2" style={{ color: 'var(--gray-400)' }}>
+              Visualization
+            </p>
+            <div className="flex gap-1.5">
               {VIZ_TYPES.map(({ id, label }) => (
                 <button
                   key={id}
                   onClick={() => onVizTypeChange(id)}
-                  className="flex-1 rounded-lg py-1.5 text-sm transition-colors"
+                  className="flex-1 rounded-lg py-1.5 text-xs font-medium transition-colors"
                   style={
                     vizType === id
-                      ? { background: 'var(--gray-500)', color: 'var(--white)' }
-                      : { background: 'var(--navy-light)', color: 'var(--gray-300)' }
+                      ? { background: 'rgba(255,255,255,0.12)', color: 'var(--white)' }
+                      : { background: 'rgba(255,255,255,0.04)', color: 'var(--gray-400)' }
                   }
                 >
                   {label}
                 </button>
               ))}
             </div>
-          </SidebarSection>
+          </div>
 
-          <SidebarSection label="Map Style">
+          {/* ── Map style ────────────────────────────────────────────────── */}
+          <div className="px-3 py-3" style={{ borderTop: '1px solid rgba(255,255,255,0.07)' }}>
+            <p className="text-xs uppercase tracking-widest mb-2" style={{ color: 'var(--gray-400)' }}>
+              Map Style
+            </p>
             <div className="flex gap-1.5">
               {MAP_STYLES.map(({ id, label }) => (
                 <button
                   key={id}
                   onClick={() => onMapStyleChange(id)}
-                  className="flex-1 rounded-lg py-1.5 text-xs transition-colors"
-                  style={
-                    mapStyleId === id
-                      ? { background: 'rgba(0,201,167,0.15)', border: '1px solid rgba(0,201,167,0.4)', color: 'var(--teal)' }
-                      : { background: 'var(--navy-light)', border: '1px solid transparent', color: 'var(--gray-300)' }
-                  }
+                  className="flex-1 rounded-lg py-1.5 text-xs font-medium transition-colors"
+                  style={mapStyleId === id ? TEAL_ACTIVE : CHIP_IDLE}
                 >
                   {label}
                 </button>
               ))}
             </div>
-          </SidebarSection>
+          </div>
 
-          {totalCount > 0 && (
-            <div style={{ borderTop: '1px solid var(--gray-600)', paddingTop: '12px' }}>
-              <p className="text-xs uppercase tracking-widest" style={{ color: 'var(--gray-400)' }}>Showing</p>
-              <p className="text-2xl font-bold" style={{ color: 'var(--white)' }}>{totalCount}</p>
-              <p className="text-xs" style={{ color: 'var(--gray-400)' }}>
-                {metric === 'density' ? 'encounters' : 'occurrences'}
-              </p>
-            </div>
-          )}
+          {/* ── Count ────────────────────────────────────────────────────── */}
+          <div className="px-4 py-4" style={{ borderTop: '1px solid rgba(255,255,255,0.07)' }}>
+            <p className="text-xs uppercase tracking-widest" style={{ color: 'var(--gray-400)' }}>
+              Showing
+            </p>
+            <p className="text-3xl font-bold mt-0.5" style={{ color: 'var(--white)' }}>
+              {totalCount.toLocaleString()}
+            </p>
+            <p className="text-xs mt-0.5" style={{ color: 'var(--gray-400)' }}>
+              {metric === 'density' ? 'encounters' : 'encounters matched'}
+            </p>
+          </div>
         </div>
       )}
 
+      {/* ── Collapse toggle ───────────────────────────────────────────────── */}
       <button
         onClick={() => setOpen((o) => !o)}
-        className="mt-2 flex h-8 w-8 items-center justify-center rounded-lg text-sm transition-colors"
+        className="self-center flex items-center justify-center h-10 w-5 text-xs transition-colors"
         style={{
-          background: 'rgba(11, 29, 58, 0.92)',
-          border: '1px solid rgba(255,255,255,0.1)',
-          color: 'var(--gray-300)',
-          backdropFilter: 'blur(16px)',
-          WebkitBackdropFilter: 'blur(16px)',
+          background: 'rgba(11, 29, 58, 0.9)',
+          borderTop: '1px solid rgba(255,255,255,0.08)',
+          borderRight: '1px solid rgba(255,255,255,0.08)',
+          borderBottom: '1px solid rgba(255,255,255,0.08)',
+          borderRadius: '0 6px 6px 0',
+          color: 'var(--gray-400)',
         }}
-        title={open ? 'Collapse sidebar' : 'Expand sidebar'}
+        title={open ? 'Collapse' : 'Expand'}
       >
-        {open ? '←' : '→'}
+        {open ? '‹' : '›'}
       </button>
-    </div>
-  );
-}
-
-function SidebarSection({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div className="space-y-1">
-      <p className="text-xs uppercase tracking-widest" style={{ color: 'var(--gray-400)' }}>{label}</p>
-      {children}
     </div>
   );
 }

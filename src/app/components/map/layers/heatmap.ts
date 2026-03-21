@@ -24,7 +24,8 @@ const COLOR_RANGE: [number, number, number][] = [
  * so no amount of data concentration can push it past that ceiling.
  */
 export function buildHeatmapLayer(data: FsaAggregate[], options: LayerOptions) {
-  const { encounters } = options;
+  const { encounters, metric, selectedKeys } = options;
+  const activeKeys = selectedKeys && selectedKeys.length > 0 ? new Set(selectedKeys) : null;
 
   // Build point array: prefer raw encounter coordinates, fall back to FSA centroids
   type Point = { lat: number; lng: number };
@@ -32,6 +33,12 @@ export function buildHeatmapLayer(data: FsaAggregate[], options: LayerOptions) {
 
   if (encounters && encounters.length > 0) {
     points = encounters
+      .filter((e) => {
+        if (!activeKeys || metric === 'density') return true;
+        if (metric === 'healthIssue') return e.healthIssues.some((h) => activeKeys.has(h.key));
+        if (metric === 'determinant') return e.upstreamDeterminants.some((d) => activeKeys.has(d.key));
+        return true;
+      })
       .map((e) => ({
         lat: e.geographicData?.lat,
         lng: e.geographicData?.lng,
@@ -56,9 +63,9 @@ export function buildHeatmapLayer(data: FsaAggregate[], options: LayerOptions) {
       radiusPixels: 45,
       intensity: 0.6,
       // Cut off the low-density fringe — only genuine hotspots render
-      threshold: 0.18,
+      threshold: 0.1,
       // Hard cap: even at maximum density the overlay is only 22% opaque
-      opacity: 0.22,
+      opacity: 0.42,
     }),
   ];
 }

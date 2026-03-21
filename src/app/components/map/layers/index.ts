@@ -1,5 +1,5 @@
 import type { Layer } from '@deck.gl/core';
-import type { AnalyzedEncounter, FsaAggregate, VisualizationType } from '@/lib/types';
+import type { AnalyzedEncounter, FsaAggregate, MapMetric, VisualizationType } from '@/lib/types';
 import { buildHeatmapLayer } from './heatmap';
 import { buildChoroplethLayer } from './choropleth';
 
@@ -20,6 +20,10 @@ export type LayerOptions = {
   neighborhoodGeoJson?: GeoJSON.FeatureCollection | null;
   /** Raw encounter records — used by heatmap for actual lat/lng coordinates. */
   encounters?: AnalyzedEncounter[];
+  /** Active metric — used by heatmap to filter the point set. */
+  metric?: MapMetric;
+  /** Active filter keys — heatmap filters encounters to those matching any key (OR). */
+  selectedKeys?: string[];
 };
 
 type LayerBuilder = (data: FsaAggregate[], options: LayerOptions) => Layer[];

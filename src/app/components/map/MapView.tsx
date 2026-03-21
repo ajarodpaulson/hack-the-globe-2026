@@ -17,7 +17,7 @@ export default function MapView() {
   const { encounters } = useEncounterData();
 
   const [metric, setMetric] = useState<MapMetric>('density');
-  const [selectedKey, setSelectedKey] = useState('');
+  const [selectedKeys, setSelectedKeys] = useState<string[]>([]);
   const [vizType, setVizType] = useState<VisualizationType>('heatmap');
   const [mapStyleId, setMapStyleId] = useState('dark');
   const [hover, setHover] = useState<HoverInfo>(null);
@@ -31,15 +31,15 @@ export default function MapView() {
   }, []);
 
   const aggregated = useMemo(
-    () => aggregateByFsa(encounters, metric, selectedKey || undefined),
-    [encounters, metric, selectedKey],
+    () => aggregateByFsa(encounters, metric, selectedKeys.length ? selectedKeys : undefined),
+    [encounters, metric, selectedKeys],
   );
 
   const mapStyleUrl = MAP_STYLES.find((s) => s.id === mapStyleId)?.url ?? MAP_STYLES[0].url;
 
   const layers = useMemo(
-    () => LAYER_BUILDERS[vizType](aggregated, { onHover: setHover, neighborhoodGeoJson, encounters }),
-    [vizType, aggregated, neighborhoodGeoJson, encounters],
+    () => LAYER_BUILDERS[vizType](aggregated, { onHover: setHover, neighborhoodGeoJson, encounters, metric, selectedKeys }),
+    [vizType, aggregated, neighborhoodGeoJson, encounters, metric, selectedKeys],
   );
 
   const totalCount = useMemo(() => aggregated.reduce((s, d) => s + d.count, 0), [aggregated]);
@@ -57,9 +57,9 @@ export default function MapView() {
 
       <Sidebar
         metric={metric}
-        onMetricChange={setMetric}
-        selectedKey={selectedKey}
-        onKeyChange={setSelectedKey}
+        onMetricChange={(m) => { setMetric(m); setSelectedKeys([]); }}
+        selectedKeys={selectedKeys}
+        onKeysChange={setSelectedKeys}
         vizType={vizType}
         onVizTypeChange={setVizType}
         mapStyleId={mapStyleId}
