@@ -1,5 +1,5 @@
-import generateAnalyzedEncounterHandler from './generate_analyzed_encounter/generate_analyzed_encounter_handler';
-import analysisDataHandler from './data/analysis_data_handler';
+import generateAnalyzedEncounterHandler from './generate_analyzed_encounter/generate_analyzed_encounter_handler.js';
+import analysisDataHandler from './data/analysis_data_handler.js';
 
 const getAnalyzedEncounters = async () => {
   const analyzedEncounters =

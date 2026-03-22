@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  serverExternalPackages: ['@aws-sdk/client-dynamodb', 'dynamodb-v3', 'ollama'],
 };
 
 export default nextConfig;

@@ -1,5 +1,5 @@
-import analyzedDataDdb from './ddb/analyzed_data_ddb';
-import generateAnalyzedEncounterRn from './util/generate_analyzed_encounter_rn';
+import analyzedDataDdb from './ddb/analyzed_data_ddb.js';
+import generateAnalyzedEncounterRn from './util/generate_analyzed_encounter_rn.js';
 
 const postAnalyzedEncounter = async (analyzedEncounter) => {
   const completedAnalyzedEncounter = {

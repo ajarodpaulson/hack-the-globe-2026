@@ -9,6 +9,7 @@ type SidebarProps = {
   onMetricChange: (m: MapMetric) => void;
   selectedKeys: string[];
   onKeysChange: (keys: string[]) => void;
+  filterKeys: { key: string; label: string }[];
   vizType: VisualizationType;
   onVizTypeChange: (v: VisualizationType) => void;
   mapStyleId: string;
@@ -45,6 +46,7 @@ export function Sidebar({
   onMetricChange,
   selectedKeys,
   onKeysChange,
+  filterKeys,
   vizType,
   onVizTypeChange,
   mapStyleId,
@@ -52,8 +54,6 @@ export function Sidebar({
   totalCount,
 }: SidebarProps) {
   const [open, setOpen] = useState(true);
-
-  const filterKeys = METRIC_CONFIGS.find((m) => m.id === metric)?.keys ?? [];
 
   function toggleKey(key: string) {
     onKeysChange(

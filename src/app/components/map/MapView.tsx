@@ -91,8 +91,8 @@ export default function MapView() {
 
   function encounterMatches(enc: (typeof encounters)[0]): boolean {
     if (!activeKeys || metric === 'density') return true;
-    if (metric === 'healthIssue') return enc.healthIssues.some((h) => activeKeys.has(h.key));
-    if (metric === 'determinant') return enc.upstreamDeterminants.some((d) => activeKeys.has(d.key));
+    if (metric === 'healthIssue') return (enc.healthIssues ?? []).some((h) => activeKeys.has(h.key));
+    if (metric === 'determinant') return (enc.upstreamDeterminants ?? []).some((d) => activeKeys.has(d.key));
     return true;
   }
 
@@ -125,6 +125,36 @@ export default function MapView() {
   const fsaAggregates = useMemo(
     () => aggregateByFsa(encounters, metric, selectedKeys.length ? selectedKeys : undefined),
     [encounters, metric, selectedKeys],
+  );
+
+  // ── Dynamic filter keys derived from real encounter data ─────────────────
+
+  const dynamicHealthKeys = useMemo(() => {
+    const keyMap = new Map<string, string>();
+    for (const enc of encounters) {
+      for (const h of enc.healthIssues ?? []) {
+        if (!keyMap.has(h.key)) keyMap.set(h.key, h.label);
+      }
+    }
+    return Array.from(keyMap.entries()).map(([key, label]) => ({ key, label }));
+  }, [encounters]);
+
+  const dynamicDeterminantKeys = useMemo(() => {
+    const keyMap = new Map<string, string>();
+    for (const enc of encounters) {
+      for (const d of enc.upstreamDeterminants ?? []) {
+        if (!keyMap.has(d.key)) keyMap.set(d.key, d.label);
+      }
+    }
+    return Array.from(keyMap.entries()).map(([key, label]) => ({ key, label }));
+  }, [encounters]);
+
+  const filterKeys = useMemo(
+    () =>
+      metric === 'healthIssue' ? dynamicHealthKeys
+      : metric === 'determinant' ? dynamicDeterminantKeys
+      : [],
+    [metric, dynamicHealthKeys, dynamicDeterminantKeys],
   );
 
   // ── Derived totals & max for scaling ─────────────────────────────────────
@@ -261,6 +291,7 @@ export default function MapView() {
         onMetricChange={(m) => { setMetric(m); setSelectedKeys([]); }}
         selectedKeys={selectedKeys}
         onKeysChange={setSelectedKeys}
+        filterKeys={filterKeys}
         vizType={vizType}
         onVizTypeChange={setVizType}
         mapStyleId={mapStyleId}
