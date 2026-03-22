@@ -49,14 +49,15 @@ export const METRIC_CONFIGS: MetricConfig[] = [
 ];
 
 export const MAP_STYLES: MapStyleConfig[] = [
-  { id: 'dark',      label: 'Dark',   url: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json' },
-  { id: 'colorful',  label: 'Street', url: 'https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json' },
-  { id: 'light',     label: 'Light',  url: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json' },
+  { id: 'dark',   label: 'Dark',   url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png' },
+  { id: 'street', label: 'Street', url: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png' },
+  { id: 'light',  label: 'Light',  url: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png' },
 ];
 
 export const VIZ_TYPES: VizTypeConfig[] = [
-  { id: 'heatmap',    label: 'Heat Map' },
-  { id: 'choropleth', label: 'Districts' },
+  { id: 'da',           label: 'Census Areas' },
+  { id: 'neighbourhood', label: 'Districts' },
+  { id: 'bubble',       label: 'Bubble' },
 ];
 
 export const DEFAULT_VIEW_STATE = {

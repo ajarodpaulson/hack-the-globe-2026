@@ -71,7 +71,7 @@ export function Sidebar({
   };
 
   return (
-    <div className="absolute top-0 left-0 bottom-0 z-10 flex">
+    <div className="absolute top-0 left-0 bottom-0 z-[1000] flex">
       {open && (
         <div className="flex flex-col w-60 h-full text-sm overflow-y-auto" style={PANEL}>
 
@@ -157,12 +157,12 @@ export function Sidebar({
             <p className="text-xs uppercase tracking-widest mb-2" style={{ color: 'var(--gray-400)' }}>
               Visualization
             </p>
-            <div className="flex gap-1.5">
+            <div className="flex flex-col gap-1">
               {VIZ_TYPES.map(({ id, label }) => (
                 <button
                   key={id}
                   onClick={() => onVizTypeChange(id)}
-                  className="flex-1 rounded-lg py-1.5 text-xs font-medium transition-colors"
+                  className="rounded-lg py-1.5 text-xs font-medium transition-colors text-left px-2"
                   style={
                     vizType === id
                       ? { background: 'rgba(255,255,255,0.12)', color: 'var(--white)' }

@@ -29,7 +29,7 @@ export type AnalyzedEncounter = {
 
 export type MapMetric = 'density' | 'healthIssue' | 'determinant';
 
-export type VisualizationType = 'heatmap' | 'choropleth';
+export type VisualizationType = 'da' | 'neighbourhood' | 'bubble';
 
 export type FsaAggregate = {
   fsa: string;
