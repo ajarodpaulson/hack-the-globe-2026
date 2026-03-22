@@ -83,21 +83,7 @@ CommunityPulse was built with the following technologies:
 
 ## Instructions to Locally Run This Project
 
-First, run the development server:
-
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
-
-Then, following the instructions as provided within the docs directory to run the local backend services (Ollama and DynamoDB).
-
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+For full setup instructions (prerequisites, local backend services, and troubleshooting), see the [Developer Instructions](docs/developer-instruction.md).
 
 ## References & Resources
 
