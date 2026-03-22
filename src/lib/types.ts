@@ -20,6 +20,7 @@ export type GeographicData = {
 
 export type AnalyzedEncounter = {
   analyzedEncounterRn: string;
+  createdAt?: string;
   biographicFactors?: BiographicFactors;
   geographicData?: GeographicData;
   upstreamDeterminants: Classification[];
@@ -28,5 +29,4 @@ export type AnalyzedEncounter = {
 
 export type MapMetric = 'density' | 'healthIssue' | 'determinant';
 
-export type VisualizationType = 'da' | 'neighbourhood' | 'bubble';
-
+export type VisualizationType = 'da' | 'neighbourhood' | 'bubble' | 'points';

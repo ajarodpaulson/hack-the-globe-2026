@@ -32,6 +32,7 @@ export const VIZ_TYPES: VizTypeConfig[] = [
   { id: 'da',           label: 'Census Areas' },
   { id: 'neighbourhood', label: 'Districts' },
   { id: 'bubble',       label: 'Bubble' },
+  { id: 'points',       label: 'Points' },
 ];
 
 export const DEFAULT_VIEW_STATE = {

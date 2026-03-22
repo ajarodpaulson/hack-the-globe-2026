@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo, useRef } from 'react';
-import { MapContainer, TileLayer, GeoJSON, CircleMarker } from 'react-leaflet';
+import { MapContainer, TileLayer, GeoJSON, CircleMarker, Popup } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import type { PathOptions } from 'leaflet';
 
@@ -9,7 +9,7 @@ import { useEncounterData } from './data';
 import { MAP_STYLES, DEFAULT_VIEW_STATE } from './config';
 import { Sidebar } from './Sidebar';
 import { buildFeatureBboxIndex, findDauid } from './geo-utils';
-import type { MapMetric, VisualizationType } from '@/lib/types';
+import type { AnalyzedEncounter, MapMetric, VisualizationType } from '@/lib/types';
 
 // ── Colour helpers ─────────────────────────────────────────────────────────
 
@@ -36,6 +36,97 @@ function bubbleColor(t: number): string {
   const g = Math.round(t < 0.5 ? 201 - t * 2 * 201 : 140 - (t - 0.5) * 2 * 140);
   const b = Math.round(t < 0.5 ? 167 - t * 2 * 167 : 0);
   return `rgb(${r},${g},${b})`;
+}
+
+const GENDER_DISPLAY_MAP: Record<string, string> = {
+  male: 'Male',
+  female: 'Female',
+  man: 'Man',
+  woman: 'Woman',
+  non_binary: 'Non-binary',
+  prefer_not_to_say: 'Prefer not to say',
+};
+
+const INCOME_LEVEL_DISPLAY_MAP: Record<string, string> = {
+  very_low: 'Very Low',
+  low: 'Low',
+  lower_middle: 'Lower Middle',
+  middle: 'Middle',
+  upper_middle: 'Upper Middle',
+  high: 'High',
+};
+
+const HOUSING_STATUS_DISPLAY_MAP: Record<string, string> = {
+  stable: 'Stable',
+  unstable: 'Unstable',
+  homeless: 'Homeless',
+  sheltered: 'Sheltered',
+  unknown: 'Unknown',
+};
+
+const EMPLOYMENT_STATUS_DISPLAY_MAP: Record<string, string> = {
+  employed: 'Employed',
+  unemployed: 'Unemployed',
+  underemployed: 'Underemployed',
+  student: 'Student',
+  retired: 'Retired',
+  unable_to_work: 'Unable to Work',
+  unknown: 'Unknown',
+};
+
+function formatStoredValue(value?: string, mapping?: Record<string, string>): string {
+  if (!value) return 'Unknown';
+  if (mapping?.[value]) return mapping[value];
+
+  return value
+    .split('_')
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ');
+}
+
+function formatEncounterDate(value?: string): string | null {
+  if (!value) return null;
+
+  const parsedDate = new Date(value);
+
+  if (Number.isNaN(parsedDate.getTime())) return null;
+
+  return parsedDate.toLocaleString();
+}
+
+function renderClassificationSummary(items: AnalyzedEncounter['healthIssues']): string {
+  if (!items.length) return 'None recorded';
+
+  return items.map((item) => item.label).join(', ');
+}
+
+function EncounterPopup({ encounter }: { encounter: AnalyzedEncounter }) {
+  const createdAt = formatEncounterDate(encounter.createdAt);
+
+  return (
+    <div style={{ minWidth: 240, maxWidth: 280, color: '#0f172a' }}>
+      {createdAt && (
+        <div style={{ fontSize: 12, color: '#475569', marginBottom: 10, fontWeight: 700 }}>
+          {createdAt}
+        </div>
+      )}
+      <div style={{ fontSize: 13, lineHeight: 1.5, marginBottom: 10 }}>
+        <div><strong>Age:</strong> {formatStoredValue(encounter.biographicFactors?.ageRange)}</div>
+        <div><strong>Gender:</strong> {formatStoredValue(encounter.biographicFactors?.gender, GENDER_DISPLAY_MAP)}</div>
+        <div><strong>Housing:</strong> {formatStoredValue(encounter.biographicFactors?.housingStatus, HOUSING_STATUS_DISPLAY_MAP)}</div>
+        <div><strong>Employment:</strong> {formatStoredValue(encounter.biographicFactors?.employmentStatus, EMPLOYMENT_STATUS_DISPLAY_MAP)}</div>
+        <div><strong>Income:</strong> {formatStoredValue(encounter.biographicFactors?.incomeLevel, INCOME_LEVEL_DISPLAY_MAP)}</div>
+      </div>
+      <div style={{ fontSize: 13, lineHeight: 1.5 }}>
+        <div style={{ marginBottom: 6 }}>
+          <strong>Health Issues:</strong> {renderClassificationSummary(encounter.healthIssues ?? [])}
+        </div>
+        <div>
+          <strong>Upstream Determinants:</strong> {renderClassificationSummary(encounter.upstreamDeterminants ?? [])}
+        </div>
+      </div>
+    </div>
+  );
 }
 
 // ── Component ──────────────────────────────────────────────────────────────
@@ -160,6 +251,15 @@ export default function MapView() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [encounters, encounterNeighbourhoodMap, neighbourhoodGeoJson, metric, activeKeys]);
 
+  const pointEncounters = useMemo(
+    () => encounters.filter((enc) => {
+      const { lat, lng } = enc.geographicData ?? {};
+      if (lat == null || lng == null) return false;
+      return encounterMatches(enc);
+    }),
+    [encounters, metric, activeKeys],
+  );
+
   // ── Dynamic filter keys derived from real encounter data ─────────────────
 
   const dynamicHealthKeys = useMemo(() => {
@@ -195,8 +295,9 @@ export default function MapView() {
   const totalCount = useMemo(() => {
     if (vizType === 'da') return [...daCounts.values()].reduce((s, c) => s + c, 0);
     if (vizType === 'neighbourhood') return [...neighbourhoodCounts.values()].reduce((s, c) => s + c, 0);
+    if (vizType === 'points') return pointEncounters.length;
     return bubbleAggregates.reduce((s, d) => s + d.count, 0);
-  }, [vizType, daCounts, neighbourhoodCounts, bubbleAggregates]);
+  }, [vizType, daCounts, neighbourhoodCounts, bubbleAggregates, pointEncounters]);
 
   const maxDa = useMemo(() => Math.max(1, ...daCounts.values()), [daCounts]);
   const maxNbhd = useMemo(() => Math.max(1, ...neighbourhoodCounts.values()), [neighbourhoodCounts]);
@@ -317,6 +418,25 @@ export default function MapView() {
               />
             );
           })}
+
+        {vizType === 'points' &&
+          pointEncounters.map((encounter) => (
+            <CircleMarker
+              key={encounter.analyzedEncounterRn}
+              center={[encounter.geographicData!.lat, encounter.geographicData!.lng]}
+              radius={6}
+              pathOptions={{
+                fillColor: 'rgb(0,201,167)',
+                fillOpacity: 0.85,
+                color: 'rgba(255,255,255,0.9)',
+                weight: 1,
+              }}
+            >
+              <Popup>
+                <EncounterPopup encounter={encounter} />
+              </Popup>
+            </CircleMarker>
+          ))}
       </MapContainer>
 
       <Sidebar
@@ -333,24 +453,26 @@ export default function MapView() {
       />
 
       {/* ── Legend ──────────────────────────────────────────────────────── */}
-      <div
-        className="pointer-events-none absolute bottom-8 right-4 z-[1000] rounded-lg px-3 py-2 text-xs"
-        style={{ background: 'rgba(11,29,58,0.88)', border: '1px solid var(--gray-600)', minWidth: 130 }}
-      >
-        <p className="mb-1 font-semibold" style={{ color: 'var(--gray-300)' }}>
-          {vizType === 'bubble' ? 'Encounter density' : 'Encounters per area'}
-        </p>
-        <div className="flex items-center gap-2">
-          <span style={{ color: 'var(--gray-400)' }}>Low</span>
-          <div
-            style={{
-              height: 8, flex: 1, borderRadius: 4,
-              background: 'linear-gradient(to right, rgb(0,201,167), rgb(255,140,0), rgb(220,38,38))',
-            }}
-          />
-          <span style={{ color: 'var(--gray-400)' }}>High</span>
+      {vizType !== 'points' && (
+        <div
+          className="pointer-events-none absolute bottom-8 right-4 z-[1000] rounded-lg px-3 py-2 text-xs"
+          style={{ background: 'rgba(11,29,58,0.88)', border: '1px solid var(--gray-600)', minWidth: 130 }}
+        >
+          <p className="mb-1 font-semibold" style={{ color: 'var(--gray-300)' }}>
+            {vizType === 'bubble' ? 'Encounter density' : 'Encounters per area'}
+          </p>
+          <div className="flex items-center gap-2">
+            <span style={{ color: 'var(--gray-400)' }}>Low</span>
+            <div
+              style={{
+                height: 8, flex: 1, borderRadius: 4,
+                background: 'linear-gradient(to right, rgb(0,201,167), rgb(255,140,0), rgb(220,38,38))',
+              }}
+            />
+            <span style={{ color: 'var(--gray-400)' }}>High</span>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* ── Hover tooltip ───────────────────────────────────────────────── */}
       {hover && (
