@@ -10,7 +10,7 @@ import { MAP_STYLES, DEFAULT_VIEW_STATE } from './config';
 import { Sidebar } from './Sidebar';
 import { DevTools } from './DevTools';
 import { buildFeatureBboxIndex, findDauid } from './geo-utils';
-import type { AnalyzedEncounter, MapMetric, VisualizationType } from '@/lib/types';
+import type { AnalyzedEncounter, DemographicFilters, MapMetric, VisualizationType } from '@/lib/types';
 
 // ── Colour helpers ─────────────────────────────────────────────────────────
 
@@ -137,6 +137,9 @@ export default function MapView() {
 
   const [metric, setMetric] = useState<MapMetric>('density');
   const [selectedKeys, setSelectedKeys] = useState<string[]>([]);
+  const [demographicFilters, setDemographicFilters] = useState<DemographicFilters>({
+    age: [], gender: [], housingStatus: [], employmentStatus: [], incomeLevel: [],
+  });
   const [vizType, setVizType] = useState<VisualizationType>('da');
   const [mapStyleId, setMapStyleId] = useState('dark');
 
@@ -198,9 +201,18 @@ export default function MapView() {
   );
 
   function encounterMatches(enc: (typeof encounters)[0]): boolean {
-    if (!activeKeys || metric === 'density') return true;
-    if (metric === 'healthIssue') return (enc.healthIssues ?? []).some((h) => activeKeys.has(h.key));
-    if (metric === 'determinant') return (enc.upstreamDeterminants ?? []).some((d) => activeKeys.has(d.key));
+    // metric filter
+    if (activeKeys && metric !== 'density') {
+      if (metric === 'healthIssue' && !(enc.healthIssues ?? []).some((h) => activeKeys.has(h.key))) return false;
+      if (metric === 'determinant' && !(enc.upstreamDeterminants ?? []).some((d) => activeKeys.has(d.key))) return false;
+    }
+    // demographic filters (applied on top of metric filter)
+    const bf = enc.biographicFactors;
+    if (demographicFilters.age.length             && !demographicFilters.age.includes(bf?.ageRange ?? ''))            return false;
+    if (demographicFilters.gender.length          && !demographicFilters.gender.includes(bf?.gender ?? ''))           return false;
+    if (demographicFilters.housingStatus.length   && !demographicFilters.housingStatus.includes(bf?.housingStatus ?? ''))   return false;
+    if (demographicFilters.employmentStatus.length && !demographicFilters.employmentStatus.includes(bf?.employmentStatus ?? '')) return false;
+    if (demographicFilters.incomeLevel.length     && !demographicFilters.incomeLevel.includes(bf?.incomeLevel ?? '')) return false;
     return true;
   }
 
@@ -215,7 +227,7 @@ export default function MapView() {
     }
     return counts;
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [encounters, encounterDaMap, metric, activeKeys]);
+  }, [encounters, encounterDaMap, metric, activeKeys, demographicFilters]);
 
   const neighbourhoodCounts = useMemo(() => {
     const counts = new Map<string, number>();
@@ -226,7 +238,7 @@ export default function MapView() {
     }
     return counts;
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [encounters, encounterNeighbourhoodMap, metric, activeKeys]);
+  }, [encounters, encounterNeighbourhoodMap, metric, activeKeys, demographicFilters]);
 
   // Bubble view: aggregate by neighbourhood, position at geo_point_2d centroid
   const bubbleAggregates = useMemo(() => {
@@ -250,7 +262,7 @@ export default function MapView() {
       })
       .filter((x): x is { name: string; lat: number; lng: number; count: number } => x !== null);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [encounters, encounterNeighbourhoodMap, neighbourhoodGeoJson, metric, activeKeys]);
+  }, [encounters, encounterNeighbourhoodMap, neighbourhoodGeoJson, metric, activeKeys, demographicFilters]);
 
   const pointEncounters = useMemo(
     () => encounters.filter((enc) => {
@@ -258,7 +270,8 @@ export default function MapView() {
       if (lat == null || lng == null) return false;
       return encounterMatches(enc);
     }),
-    [encounters, metric, activeKeys],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [encounters, metric, activeKeys, demographicFilters],
   );
 
   // ── Dynamic filter keys derived from real encounter data ─────────────────
@@ -283,9 +296,31 @@ export default function MapView() {
     return Array.from(keyMap.entries()).map(([key, label]) => ({ key, label }));
   }, [encounters]);
 
+  function makeBiographicKeys(getter: (enc: typeof encounters[0]) => string | undefined, displayMap?: Record<string, string>) {
+    const seen = new Set<string>();
+    const result: { key: string; label: string }[] = [];
+    for (const enc of encounters) {
+      const val = getter(enc);
+      if (val && !seen.has(val)) {
+        seen.add(val);
+        result.push({ key: val, label: displayMap?.[val] ?? formatStoredValue(val) });
+      }
+    }
+    return result;
+  }
+
+  const dynamicDemoOptions = useMemo(() => ({
+    age:              makeBiographicKeys((e) => e.biographicFactors?.ageRange),
+    gender:           makeBiographicKeys((e) => e.biographicFactors?.gender,           GENDER_DISPLAY_MAP),
+    housingStatus:    makeBiographicKeys((e) => e.biographicFactors?.housingStatus,    HOUSING_STATUS_DISPLAY_MAP),
+    employmentStatus: makeBiographicKeys((e) => e.biographicFactors?.employmentStatus, EMPLOYMENT_STATUS_DISPLAY_MAP),
+    incomeLevel:      makeBiographicKeys((e) => e.biographicFactors?.incomeLevel,      INCOME_LEVEL_DISPLAY_MAP),
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }), [encounters]);
+
   const filterKeys = useMemo(
     () =>
-      metric === 'healthIssue' ? dynamicHealthKeys
+      metric === 'healthIssue'   ? dynamicHealthKeys
       : metric === 'determinant' ? dynamicDeterminantKeys
       : [],
     [metric, dynamicHealthKeys, dynamicDeterminantKeys],
@@ -446,6 +481,9 @@ export default function MapView() {
         selectedKeys={selectedKeys}
         onKeysChange={setSelectedKeys}
         filterKeys={filterKeys}
+        demographicFilters={demographicFilters}
+        onDemographicChange={setDemographicFilters}
+        dynamicDemoOptions={dynamicDemoOptions}
         vizType={vizType}
         onVizTypeChange={setVizType}
         mapStyleId={mapStyleId}

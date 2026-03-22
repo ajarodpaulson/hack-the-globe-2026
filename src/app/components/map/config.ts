@@ -17,7 +17,7 @@ export type VizTypeConfig = {
 };
 
 export const METRIC_CONFIGS: MetricConfig[] = [
-  { id: 'density', label: 'Encounter Density' },
+  { id: 'density',     label: 'Encounter Density' },
   { id: 'healthIssue', label: 'Health Issues' },
   { id: 'determinant', label: 'Upstream Determinants' },
 ];

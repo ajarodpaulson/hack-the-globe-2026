@@ -2,7 +2,9 @@
 
 import { useState } from 'react';
 import { METRIC_CONFIGS, MAP_STYLES, VIZ_TYPES } from './config';
-import type { MapMetric, VisualizationType } from '@/lib/types';
+import type { DemographicFilters, MapMetric, VisualizationType } from '@/lib/types';
+
+type DemoOption = { key: string; label: string };
 
 type SidebarProps = {
   metric: MapMetric;
@@ -10,6 +12,15 @@ type SidebarProps = {
   selectedKeys: string[];
   onKeysChange: (keys: string[]) => void;
   filterKeys: { key: string; label: string }[];
+  demographicFilters: DemographicFilters;
+  onDemographicChange: (filters: DemographicFilters) => void;
+  dynamicDemoOptions: {
+    age: DemoOption[];
+    gender: DemoOption[];
+    housingStatus: DemoOption[];
+    employmentStatus: DemoOption[];
+    incomeLevel: DemoOption[];
+  };
   vizType: VisualizationType;
   onVizTypeChange: (v: VisualizationType) => void;
   mapStyleId: string;
@@ -41,12 +52,77 @@ const CHIP_IDLE = {
   color: 'var(--gray-300)',
 } as const;
 
+const DEMO_LABELS: Record<keyof DemographicFilters, string> = {
+  age:              'Age Range',
+  gender:           'Gender',
+  housingStatus:    'Housing Status',
+  employmentStatus: 'Employment',
+  incomeLevel:      'Income Level',
+};
+
+function DemoFilterGroup({
+  label,
+  options,
+  selected,
+  onChange,
+}: {
+  label: string;
+  options: DemoOption[];
+  selected: string[];
+  onChange: (keys: string[]) => void;
+}) {
+  if (!options.length) return null;
+
+  function toggle(key: string) {
+    onChange(selected.includes(key) ? selected.filter((k) => k !== key) : [...selected, key]);
+  }
+
+  return (
+    <div style={{ marginBottom: 10 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+        <span style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--gray-500)' }}>
+          {label}
+        </span>
+        {selected.length > 0 && (
+          <button
+            onClick={() => onChange([])}
+            style={{ fontSize: 10, color: 'var(--gray-500)', background: 'none', border: 'none', cursor: 'pointer', padding: '0 2px' }}
+          >
+            clear
+          </button>
+        )}
+      </div>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+        {options.map(({ key, label: optLabel }) => (
+          <button
+            key={key}
+            onClick={() => toggle(key)}
+            style={{
+              ...(selected.includes(key) ? CHIP_ACTIVE : CHIP_IDLE),
+              borderRadius: 999,
+              padding: '2px 8px',
+              fontSize: 11,
+              fontWeight: 500,
+              cursor: 'pointer',
+            }}
+          >
+            {optLabel}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export function Sidebar({
   metric,
   onMetricChange,
   selectedKeys,
   onKeysChange,
   filterKeys,
+  demographicFilters,
+  onDemographicChange,
+  dynamicDemoOptions,
   vizType,
   onVizTypeChange,
   mapStyleId,
@@ -54,6 +130,9 @@ export function Sidebar({
   totalCount,
 }: SidebarProps) {
   const [open, setOpen] = useState(true);
+  const [demoOpen, setDemoOpen] = useState(true);
+
+  const hasDemoFilters = Object.values(demographicFilters).some((v) => v.length > 0);
 
   function toggleKey(key: string) {
     onKeysChange(
@@ -61,6 +140,14 @@ export function Sidebar({
         ? selectedKeys.filter((k) => k !== key)
         : [...selectedKeys, key],
     );
+  }
+
+  function setDemoField<K extends keyof DemographicFilters>(field: K, keys: string[]) {
+    onDemographicChange({ ...demographicFilters, [field]: keys });
+  }
+
+  function clearAllDemo() {
+    onDemographicChange({ age: [], gender: [], housingStatus: [], employmentStatus: [], incomeLevel: [] });
   }
 
   const PANEL: React.CSSProperties = {
@@ -73,7 +160,7 @@ export function Sidebar({
   return (
     <div className="absolute top-0 left-0 bottom-0 z-[1000] flex">
       {open && (
-        <div className="flex flex-col w-60 h-full text-sm overflow-y-auto" style={PANEL}>
+        <div className="flex flex-col w-64 h-full text-sm overflow-y-auto" style={PANEL}>
 
           {/* ── Header ───────────────────────────────────────────────────── */}
           <div className="px-4 pt-5 pb-3" style={{ borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
@@ -149,7 +236,45 @@ export function Sidebar({
             </div>
           )}
 
-          {/* ── Spacer pushes the rest to the bottom ─────────────────────── */}
+          {/* ── Demographics ─────────────────────────────────────────────── */}
+          <div className="px-3 pt-3 pb-2" style={{ borderTop: '1px solid rgba(255,255,255,0.07)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+              <button
+                onClick={() => setDemoOpen((o) => !o)}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center', gap: 4 }}
+              >
+                <p className="text-xs uppercase tracking-widest" style={{ color: 'var(--gray-400)' }}>
+                  Demographics
+                </p>
+                <span style={{ fontSize: 10, color: 'var(--gray-500)' }}>{demoOpen ? '▲' : '▼'}</span>
+              </button>
+              {hasDemoFilters && (
+                <button
+                  onClick={clearAllDemo}
+                  className="text-xs rounded px-1.5 py-0.5"
+                  style={{ color: 'var(--gray-400)', border: '1px solid rgba(255,255,255,0.1)' }}
+                >
+                  Clear all
+                </button>
+              )}
+            </div>
+
+            {demoOpen && (
+              <div>
+                {(Object.keys(DEMO_LABELS) as (keyof DemographicFilters)[]).map((field) => (
+                  <DemoFilterGroup
+                    key={field}
+                    label={DEMO_LABELS[field]}
+                    options={dynamicDemoOptions[field]}
+                    selected={demographicFilters[field]}
+                    onChange={(keys) => setDemoField(field, keys)}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* ── Spacer ────────────────────────────────────────────────────── */}
           <div className="flex-1" />
 
           {/* ── Visualization ────────────────────────────────────────────── */}

@@ -29,4 +29,12 @@ export type AnalyzedEncounter = {
 
 export type MapMetric = 'density' | 'healthIssue' | 'determinant';
 
+export type DemographicFilters = {
+  age: string[];
+  gender: string[];
+  housingStatus: string[];
+  employmentStatus: string[];
+  incomeLevel: string[];
+};
+
 export type VisualizationType = 'da' | 'neighbourhood' | 'bubble' | 'points';
