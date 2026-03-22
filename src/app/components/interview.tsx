@@ -3,6 +3,7 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import dynamic from "next/dynamic";
 import LoadingDialog from "./LoadingDialog";
+import { toast } from "sonner";
 
 /* ------------------------------------------------------------------ */
 /*  Web Speech API type declarations (not in default TS lib.dom)       */
@@ -237,12 +238,18 @@ export default function InterviewForm() {
       })
         .then((response) => {
           if (!response.ok) {
-            throw new Error("Failed to anonymize transcript");
+            return {
+              error: true,
+              message: "Failed to anonymize transcript",
+            };
           }
           console.log("Transcript anonymization submitted successfully");
           return response.json();
         })
         .then((data) => {
+          if (data.error) {
+            toast.error("Submission processing failed. Please try again.");
+          }
           const analysisPayload = {
             ageRange: data.ageRange,
             gender: data.gender,
@@ -259,20 +266,25 @@ export default function InterviewForm() {
         })
         .then((analysisResponse) => {
           if (!analysisResponse.ok) {
-            throw new Error("Failed to analyze encounter");
+            return {
+              error: true,
+              message: "Failed to submit for analysis",
+            };
           }
           console.log("Encounter analysis submitted successfully");
           return analysisResponse.json();
         })
-        .then((analysisData) => {
-          // for debugging
-          console.log("Analysis result:", analysisData);
+        .then((data) => {
+          if (data.error) {
+            toast.error("Submission processing failed. Please try again.");
+          } else {
+            // for debugging
+            alert("Demo: all backend-side processing worked successfully!");
+          }
         })
         .catch((error) => {
-          console.error("Error during submission:", error);
-        })
-        .finally(() => {
-          alert("Demo: all backend-side processing work completed.");
+          console.error("Error during post-processing:", error);
+          toast.error("Submission processing failed. Please try again.");
         });
 
       setTimeout(() => {
@@ -280,7 +292,8 @@ export default function InterviewForm() {
         setSubmitted(true);
       }, 5000); // fake delay to look like we're analyzing
     } catch (error) {
-      console.error("Submission failed. Please try again.", error);
+      toast.error("Submission processing failed. Please try again.");
+      console.error("Error during submission:", error);
       setSubmitting(false);
     }
   };
