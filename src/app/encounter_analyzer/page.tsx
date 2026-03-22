@@ -3,7 +3,7 @@ export default async function ServerExamplePage() {
   let errorMessage = null;
 
   try {
-    const res = await fetch("http://localhost:3000/api", {
+    const res = await fetch("http://localhost:3000/api/analysis", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
