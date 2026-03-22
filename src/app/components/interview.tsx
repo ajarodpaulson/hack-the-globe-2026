@@ -222,19 +222,39 @@ export default function InterviewForm() {
     const handleSubmit = async () => {
         setSubmitting(true);
         try {
-            const payload = {
+            const anonymizePayload = {
                 ageRange: form.ageRange,
                 gender: form.gender,
-                lat: form.lat,
-                lng: form.lng,
                 transcript: form.transcript,
             };
 
-            await fetch("/api", {
+            const anonymizeResponse = await fetch("/api", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(payload),
+                body: JSON.stringify(anonymizePayload),
             });
+
+            if (!anonymizeResponse.ok) {
+                throw new Error("Failed to anonymize transcript");
+            }
+
+            const anonymizedEncounter = await anonymizeResponse.json();
+
+            const analysisPayload = {
+                ageRange: anonymizedEncounter.ageRange,
+                gender: anonymizedEncounter.gender,
+                transcript: anonymizedEncounter.anonymizedTranscript,
+            };
+
+            const analysisResponse = await fetch("/api/analysis", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(analysisPayload),
+            });
+
+            if (!analysisResponse.ok) {
+                throw new Error("Failed to analyze encounter");
+            }
 
             setSubmitted(true);
         } catch {
