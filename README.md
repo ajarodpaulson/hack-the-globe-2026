@@ -1,4 +1,9 @@
 # CommunityPulse
+
+<p align="center">
+  <img src="project_assets/CommunityPulse_LandingPage.png" alt="CommunityPulse Landing Page" width="750" height="750">
+</p>
+
 CommunityPulse is a web application that helps outreach workers capture patient stories from those within the community in need. Through one-on-one interviews, it takes confidential patient information, parses and provides an in-depth analysis that helps to identiy social determinants of health. These are then plotted onto a geographical heatmap, thereby providing a visualization of community needs that can be filtered by age, gender, and other demographic factors.
 
 ## Inspiration Behind Project - Understanding the Scope of the Problem
@@ -78,19 +83,7 @@ CommunityPulse was built with the following technologies:
 
 ## Instructions to Locally Run This Project
 
-First, run the development server:
-
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
-
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+For full setup instructions (prerequisites, local backend services, and troubleshooting), see the [Developer Instructions](docs/developer-instruction.md).
 
 ## References & Resources
 

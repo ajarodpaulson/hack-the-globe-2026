@@ -217,15 +217,17 @@ export default function InterviewForm() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  /* ---- submit ---- */
-  const handleSubmit = async () => {
-    setSubmitting(true);
-    try {
-      const anonymizePayload = {
-        ageRange: form.ageRange,
-        gender: form.gender,
-        transcript: form.transcript,
-      };
+    /* ---- submit ---- */
+    const handleSubmit = async () => {
+        setSubmitting(true);
+        try {
+            const anonymizePayload = {
+                ageRange: form.ageRange,
+                gender: form.gender,
+                lat: form.lat,
+                lng: form.lng,
+                transcript: form.transcript,
+            };
 
       // don't wait for response here, fire-and-forget to keep the UI responsive. The backend will handle the full processing workflow.
       fetch("/api", {

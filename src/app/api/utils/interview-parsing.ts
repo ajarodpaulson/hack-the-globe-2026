@@ -7,6 +7,8 @@ const MODEL = "llama3";
 export type PredeterminedInterviewFields = {
   ageRange?: string;
   gender?: string;
+  lat?: number;
+  lng?: number;
 };
 
 export type InterviewParsingInput = PredeterminedInterviewFields & {
