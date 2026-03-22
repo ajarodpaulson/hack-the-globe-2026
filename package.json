@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "start:local-backend": "bash scripts/start-local-backend.sh",
+    "seed:analysis": "node scripts/seed-analysis-data.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-dynamodb": "^3.1014.0",

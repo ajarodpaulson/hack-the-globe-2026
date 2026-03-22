@@ -1,6 +1,6 @@
 import dynamo from 'dynamodb-v3';
 import Joi from 'joi';
-import configureDynamo from './configure_dynamo';
+import configureDynamo from './configure_dynamo.js';
 
 configureDynamo();
 

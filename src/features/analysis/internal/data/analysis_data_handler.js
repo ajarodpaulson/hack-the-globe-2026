@@ -7,10 +7,17 @@ const postAnalyzedEncounter = async (analyzedEncounter) => {
     ...analyzedEncounter,
   };
 
-  return analyzedDataDdb.create(completedAnalyzedEncounter);
+  const persistedAnalyzedEncounter =
+    await analyzedDataDdb.create(completedAnalyzedEncounter);
+
+  return persistedAnalyzedEncounter;
 };
 
-const getAnalyzedEncounters = async () => analyzedDataDdb.getAll();
+const getAnalyzedEncounters = async () => {
+  const analyzedEncounters = await analyzedDataDdb.getAll();
+
+  return analyzedEncounters;
+};
 
 const analysisDataHandler = {
   postAnalyzedEncounter,
