@@ -36,6 +36,8 @@ Thus, we built CommunityPulse.
 
 CommunityPulse is a web application that helps outreach workers capture patient stories from those within the community in need. Through one-on-one interviews, it takes confidential patient information, parses and provides an in-depth analysis that helps to identiy social determinants of health. These are then plotted onto a geographical heatmap, thereby providing a visualization of high-risk areas that are in need of community services, which can be filtered by factors such as age, gender, and other demographic factors.
 
+In this current version of CommunityPulse, we wanted to put our focus in the SDOH governing the Greater Vancouver area, as it is the home for many of our team members. As citizens of Vancouver, we have often bore witness to the growing issues of homelessness, poverty, a continually worsening housing crisis, and lack of access to healthcare in our community. Thus, we wanted to push our efforts to a city that we wish to see improve from our outreach efforts with this project. 
+
 ### Key Features 
 
 **Geographical Location Recording:**
@@ -47,7 +49,7 @@ For the interview intake, we emphasized on the importance of maintaining patient
 We also utilized the Web Speech API to allow outreach workers to record interviews in real-time, without the need for a third-party application, thereby preserving the privacy of our users in need. 
 
 **Interview Transcript Anonymization & Analysis:**
-Finally, we also made use of a local LLM - Ollama - to process, anonymize and analyze interview transcriptions. 
+Finally, we also made use of a local LLM - Ollama - to process, anonymize and analyze interview transcriptions. Ollama can smartly parse out key information from the interview transcriptions, such as the patient's age, gender, and the social determinants of health that are affecting them - all while maintaining patient anonymity, which is something our team greatly values, especially in the advent of Artificial Intelligence.
 
 All finalized results will then be stored in a local instance of DynamoDB.
 <!-- TODO: Please correct this if not accurate -->
@@ -65,10 +67,14 @@ CommunityPulse was built with the following technologies:
 * Ollama (The local LLM used to process, anonymize and analyze interview transcriptions)
 * Leaflet (A JavaScript library for interactive maps)
 * Web Speech API (A JavaScript API for speech recognition and synthesis)
-* AWS Services (DynamoDB, Bedrock (?))
+* AWS Services (DynamoDB)
 
 ## Future Plans 
-Placeholder.
+* Multi-language expansion functionalities: We understand that many global communities speak different languages. Even for a city that is characterized by vast multiculturalism such as Vancouver, we hope to eventually expand our web application to support multiple languages to better serve the needs of our diverse communities. However, scalability is a challenge that we must address - we'll first streamline service delivery for those within the Greater Vancouver area before expanding to other regions (I.e., Calgary, Toronto - and one day, potentially the entirety of Canada).
+
+* Integration with predictive analytics: As mentioned, the business model we wish to utilize for CommunityPulse is a "freemium" SaaS. For community-based organizations, such as non-profits and government agencies, we aim to provide a free tier of basic functionalities. However, for larger organizations, we hope to offer a premium tier that includes advanced features such as predictive analytics, which can be used to accurately predict and forecast potential healthcare crises' before they emerge and escalate as an enhaced preventative measure. 
+
+* Partnerships with government agencies: CommunityPulse is a tool that we believe can be of great use to government agencies in their efforts to address social determinants of health. By providing our local government with the tools and resources required to address growing community demands and needs, we believe that this step will be able to improve our target demographic: those who are most vulnerable. 
 
 ## Instructions to Locally Run This Project
 
@@ -91,6 +97,14 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 ### Canadian Data
 <ol>
 <li>https://www.canada.ca/en/public-health/services/health-promotion/population-health/what-determines-health.html</li>
+</ol>
+
+### Vancouver-based Data 
+<ol>
+<li>https://opentextbc.ca/peersupport/part/social-determinants-of-health/</li
+<li>https://vancouver.ca/people-programs/research-and-data-toward-a-healthy-city-for-all.aspx (See: City of Vancouver Overall)</li>
+<li>https://communityhealth.phsa.ca/HealthProfiles/HealthReportFactorsThatAffectHealth/Vancouver%20-%20Aggregate</li>
+<li>https://pmc.ncbi.nlm.nih.gov/articles/PMC4910448/</li>
 </ol>
 
 ### The Problem Scope
