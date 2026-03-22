@@ -54,14 +54,19 @@ For the interview intake, we emphasized on the importance of maintaining patient
 We also utilized the Web Speech API to allow outreach workers to record interviews in real-time, without the need for a third-party application, thereby preserving the privacy of our users in need. 
 
 **Interview Transcript Anonymization & Analysis:**
-Finally, we also made use of a local LLM - Ollama - to process, anonymize and analyze interview transcriptions. Ollama can smartly parse out key information from the interview transcriptions, such as the patient's age, gender, and the social determinants of health that are affecting them - all while maintaining patient anonymity, which is something our team greatly values, especially in the advent of Artificial Intelligence.
+We employed a combination of deterministic and probabilistic strategies to translate raw interview transcription into a structured data point. Our pipeline transforms each interview into a normalized record that combines predetermined metadata fields with model-generated analysis of both prevailing health issues and upstream socioeconomic determinants of health. This allows us to analyze transcripts not only in terms of the conditions a patient is experiencing, but also the broader structural and social factors contributing to those outcomes.
 
-All finalized results will then be stored in a local instance of DynamoDB.
-<!-- TODO: Please correct this if not accurate -->
+To achieve this, we built a two-agent pipeline powered by a local LLM through Ollama. The first agent is an anonymization agent whose sole responsibility is privacy protection: it removes personally identifying information from the transcript and generalizes location data by slightly perturbing coordinate information, helping preserve anonymity while still supporting meaningful geographic analysis. The second agent acts as a health determinants analysis agent, extracting structured biographic context, health issues, and social determinants of health from the anonymized transcript.
+
+We also built several layers of validation into the pipeline to ensure quality and reliability. Outputs are checked and normalized after anonymization, validated again after analysis to ensure they conform to the expected structure, and then passed through an additional validation layer before being written to the database. This gives us a robust end-to-end workflow that turns unstructured interviews into privacy-conscious, analysis-ready data while maintaining a high standard for data quality.
 
 **Geographical Heatmap:**
-<!-- TODO -->
-Placeholder for now.
+Analyzed encounter records are plotted onto an interactive map built with Leaflet, giving health policy makers a live view of where community needs are concentrated across the city. The map uses official Statistics Canada Dissemination
+Area boundaries, so the data aligns directly with the geographic units that public health reporting and resource allocation decisions are already based on.
+
+The map can be filtered by health condition and social determinant of health, as well as by demographic factors like age and gender. Because each record captures the full picture of a patient's health issues and their underlying social
+context, different filters reveal genuinely different parts of the city — making it possible to see, for example, where housing instability is driving health outcomes versus where language barriers are the dominant factor. This is the
+kind of spatial, multi-factor view that is difficult to obtain from traditional aggregate health data, and that we believe can meaningfully inform where policy interventions are directed.
 
 ## Tech Stack 
 CommunityPulse was built with the following technologies:
