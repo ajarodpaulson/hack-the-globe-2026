@@ -13,8 +13,20 @@ const createAnalyzedEncounter = async (anonymizedEncounter) => {
     await generateAnalyzedEncounterHandler.generateAnalyzedEncounter(
       anonymizedEncounter,
     );
+
+  const geographicData =
+    anonymizedEncounter?.lat != null && anonymizedEncounter?.lng != null
+      ? {
+          lat: anonymizedEncounter.lat,
+          lng: anonymizedEncounter.lng,
+        }
+      : anonymizedEncounter?.geographicData;
+
   const persistedAnalyzedEncounter =
-    await analysisDataHandler.postAnalyzedEncounter(analyzedEncounter);
+    await analysisDataHandler.postAnalyzedEncounter({
+      ...analyzedEncounter,
+      ...(geographicData ? { geographicData } : {}),
+    });
 
   return persistedAnalyzedEncounter;
 };

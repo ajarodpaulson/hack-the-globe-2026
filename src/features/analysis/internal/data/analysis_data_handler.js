@@ -7,8 +7,24 @@ const postAnalyzedEncounter = async (analyzedEncounter) => {
     ...analyzedEncounter,
   };
 
-  const persistedAnalyzedEncounter =
-    await analyzedDataDdb.create(completedAnalyzedEncounter);
+  console.log(
+    'Persisting analyzed encounter:',
+    JSON.stringify(completedAnalyzedEncounter, null, 2),
+  );
+
+  let persistedAnalyzedEncounter;
+
+  try {
+    persistedAnalyzedEncounter =
+      await analyzedDataDdb.create(completedAnalyzedEncounter);
+  } catch (error) {
+    console.error('Failed to persist analyzed encounter:', {
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      analyzedEncounterRn: completedAnalyzedEncounter.analyzedEncounterRn,
+    });
+    throw error;
+  }
 
   return persistedAnalyzedEncounter;
 };

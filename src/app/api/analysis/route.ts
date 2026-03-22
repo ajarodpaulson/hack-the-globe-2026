@@ -22,6 +22,18 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const anonymizedEncounter = await request.json();
+
+    console.log("[api/analysis] Received anonymized encounter", {
+      keys: Object.keys(anonymizedEncounter ?? {}),
+      hasTranscript: typeof anonymizedEncounter?.transcript === "string",
+      transcriptLength:
+        typeof anonymizedEncounter?.transcript === "string"
+          ? anonymizedEncounter.transcript.length
+          : 0,
+      ageRange: anonymizedEncounter?.ageRange,
+      gender: anonymizedEncounter?.gender,
+    });
+
     const analyzedEncounter =
       await analysisService.createAnalyzedEncounter(anonymizedEncounter);
 
@@ -33,6 +45,11 @@ export async function POST(request: Request) {
       { status: 201 }
     );
   } catch (error) {
+    console.error("[api/analysis] Failed to create analyzed encounter", {
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+    });
+
     return Response.json(
       {
         ok: false,

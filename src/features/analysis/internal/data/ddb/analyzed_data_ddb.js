@@ -52,9 +52,12 @@ const biographicFactorsSchema = Joi.object({
 }).min(1);
 
 const geographicDataSchema = Joi.object({
-  lat: Joi.number().min(-90).max(90).required(),
-  lng: Joi.number().min(-180).max(180).required(),
-});
+  lat: Joi.number().min(-90).max(90).optional(),
+  lng: Joi.number().min(-180).max(180).optional(),
+})
+  .or('lat', 'lng')
+  .with('lat', 'lng')
+  .with('lng', 'lat');
 
 const ddb = dynamo.define('Analyzed_Encounter', {
   tableName: 'Analyzed_Encounter',
