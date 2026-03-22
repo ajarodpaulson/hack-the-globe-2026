@@ -25,6 +25,13 @@ Rules:
 - Use the transcript as the primary source of evidence.
 - Use any supplied structured biographic fields as strong context.
 - Make a best effort to populate every field.
+- Include upstream determinants when they are directly supported by either the transcript or supplied structured fields.
+- Do not require the transcript to explicitly name a determinant category if the underlying fact pattern is clearly present.
+- If the patient cannot afford food, medication, rent, or other essentials, that supports financial strain and may support income poverty or food insecurity when stated.
+- If the patient has lost work or is out of work, that supports unemployment or employment barriers.
+- If the patient is behind on rent, couch surfing, worried about losing housing, or described as unstable in structured fields, that supports housing instability.
+- If the patient cannot reach care because of lack of car, transit cost, or missed travel to appointments, that supports transportation barriers.
+- Structured fields such as housingStatus, employmentStatus, and incomeLevel are valid evidence for upstream determinants and should be reflected when relevant.
 - If evidence is insufficient for a biographic factor, set value to null and explain why.
 - If evidence is insufficient for upstream determinants or health issues, return an empty values array and explain why in the parent reason.
 - Every nested object must emit the reason field before any other field.
