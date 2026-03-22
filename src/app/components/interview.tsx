@@ -2,6 +2,7 @@
 
 import { useState, useRef, useCallback, useEffect } from "react";
 import dynamic from "next/dynamic";
+import LoadingDialog from "./LoadingDialog";
 
 /* ------------------------------------------------------------------ */
 /*  Web Speech API type declarations (not in default TS lib.dom)       */
@@ -290,6 +291,8 @@ export default function InterviewForm() {
 
     return (
         <div>
+            <LoadingDialog isOpen={submitting} />
+
             {/* ===== Stepper ===== */}
             <div
                 style={{
