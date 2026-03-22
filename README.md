@@ -1,4 +1,7 @@
 # CommunityPulse
+
+<img src="project_assets/CommunityPulse_LandingPage.png" alt="CommunityPulse Landing Page" width="200" height="200">
+
 CommunityPulse is a web application that helps outreach workers capture patient stories from those within the community in need. Through one-on-one interviews, it takes confidential patient information, parses and provides an in-depth analysis that helps to identiy social determinants of health. These are then plotted onto a geographical heatmap, thereby providing a visualization of community needs that can be filtered by age, gender, and other demographic factors.
 
 ## Inspiration Behind Project - Understanding the Scope of the Problem
@@ -89,6 +92,8 @@ pnpm dev
 # or
 bun dev
 ```
+
+Then, following the instructions as provided within the docs directory to run the local backend services (Ollama and DynamoDB).
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
