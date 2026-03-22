@@ -54,11 +54,13 @@ export async function maskPII(transcript: string): Promise<string> {
 export async function parseInterviewTranscript(
   input: InterviewParsingInput
 ): Promise<InterviewParsingResult> {
-  const { transcript, ...predeterminedFields } = input;
+  const { transcript, lat, lng, ...predeterminedFields } = input;
   const anonymizedTranscript = await maskPII(transcript);
 
   return {
     ...predeterminedFields,
+    ...(lat != null ? { lat: Number(lat.toFixed(3)) } : {}),
+    ...(lng != null ? { lng: Number(lng.toFixed(3)) } : {}),
     anonymizedTranscript,
   };
 }
