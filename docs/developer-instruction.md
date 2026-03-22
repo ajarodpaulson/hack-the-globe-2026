@@ -7,7 +7,8 @@ Built at **Hack the Globe 2026**.
 ## Prerequisites
 
 - [Node.js](https://nodejs.org/) (v18+)
-- [Ollama](https://ollama.com) (local LLM for PII masking)
+- [Docker](https://www.docker.com/products/docker-desktop/) — required for DynamoDB Local
+- [Ollama](https://ollama.com) — local LLM for PII masking and SDOH classification (no data leaves your machine)
 
 ### Install Ollama
 
@@ -33,19 +34,42 @@ ollama pull llama3
 npm install
 ```
 
-2. Start Ollama (in a separate terminal):
+2. Start local backend services (DynamoDB Local + Ollama):
 
 ```bash
-ollama serve
+npm run start:local-backend
 ```
 
-3. Start the dev server:
+> **Note:** Make sure Docker Desktop is running before executing this command. This script starts a DynamoDB Local container on `localhost:8000` and Ollama on `localhost:11434`.
+
+3. (Optional) Seed sample analysis data:
+
+```bash
+npm run seed:analysis
+```
+
+4. Start the dev server:
 
 ```bash
 npm run dev
 ```
 
-4. Open [http://localhost:3000](http://localhost:3000) in your browser.
+5. Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+## Service Overview
+
+| Service | URL | How to verify |
+|---|---|---|
+| Next.js dev server | `localhost:3000` | Open in browser |
+| Ollama | `localhost:11434` | `curl http://localhost:11434/api/tags` |
+| DynamoDB Local | `localhost:8000` | `docker ps` shows `dynamodb-local` |
+
+## Troubleshooting
+
+- **`ollama: command not found`** — Install Ollama with `brew install ollama`
+- **`model 'llama3' not found`** — Run `ollama pull llama3`
+- **`ECONNREFUSED` on Ollama** — Run `ollama serve` in a separate terminal, or use `npm run start:local-backend` which starts it automatically
+- **Docker errors** — Make sure Docker Desktop is open and running before running `start:local-backend`
 
 ## How It Works
 
