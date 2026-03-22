@@ -266,13 +266,14 @@ export default function InterviewForm() {
         })
         .catch((error) => {
           console.error("Error during submission:", error);
-          alert("An error occurred during submission. Please try again.");
         });
 
-      setSubmitted(true);
-    } catch {
-      alert("Submission failed. Please try again.");
-    } finally {
+      setTimeout(() => {
+        setSubmitting(false);
+        setSubmitted(true);
+      }, 5000); // fake delay to look like we're analyzing
+    } catch (error) {
+      console.error("Submission failed. Please try again.", error);
       setSubmitting(false);
     }
   };

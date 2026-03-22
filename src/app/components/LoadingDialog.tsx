@@ -10,8 +10,8 @@ const STATUS_MESSAGES = [
   "Building encounter record...",
 ];
 
-const CYCLE_MS = 3000;
-const TICK_MS = 200;
+const CYCLE_MS = 1000;
+const TICK_MS = 50;
 
 export default function LoadingDialog({ isOpen }: { isOpen: boolean }) {
   const [messageIndex, setMessageIndex] = useState(0);
@@ -51,8 +51,7 @@ export default function LoadingDialog({ isOpen }: { isOpen: boolean }) {
       setProgress((prev) => {
         const target = targetRef.current;
         if (prev >= target) return prev;
-        // Move ~20% of the remaining distance each tick for smooth easing
-        const step = Math.max(0.3, (target - prev) * 0.08);
+        const step = Math.max(0.5, (target - prev) * 0.15);
         return Math.min(prev + step, target);
       });
     }, TICK_MS);
