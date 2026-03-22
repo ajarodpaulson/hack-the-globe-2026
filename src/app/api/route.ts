@@ -4,11 +4,13 @@ import { parseInterviewTranscript } from "./utils/interview-parsing";
 type RequestBody = {
   ageRange?: string;
   gender?: string;
+  lat?: number;
+  lng?: number;
   transcript: string;
 };
 
 export async function POST(request: NextRequest) {
-  const { ageRange, gender, transcript }: RequestBody = await request.json();
+  const { ageRange, gender, lat, lng, transcript }: RequestBody = await request.json();
 
   if (!transcript) {
     return NextResponse.json(
@@ -20,6 +22,8 @@ export async function POST(request: NextRequest) {
   const record = await parseInterviewTranscript({
     ageRange,
     gender,
+    lat,
+    lng,
     transcript,
   });
 

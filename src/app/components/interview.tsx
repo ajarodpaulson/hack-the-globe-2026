@@ -225,6 +225,8 @@ export default function InterviewForm() {
             const anonymizePayload = {
                 ageRange: form.ageRange,
                 gender: form.gender,
+                lat: form.lat,
+                lng: form.lng,
                 transcript: form.transcript,
             };
 
@@ -243,6 +245,8 @@ export default function InterviewForm() {
             const analysisPayload = {
                 ageRange: anonymizedEncounter.ageRange,
                 gender: anonymizedEncounter.gender,
+                lat: anonymizedEncounter.lat,
+                lng: anonymizedEncounter.lng,
                 transcript: anonymizedEncounter.anonymizedTranscript,
             };
 
