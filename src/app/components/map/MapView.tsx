@@ -8,6 +8,7 @@ import type { PathOptions } from 'leaflet';
 import { useEncounterData } from './data';
 import { MAP_STYLES, DEFAULT_VIEW_STATE } from './config';
 import { Sidebar } from './Sidebar';
+import { DevTools } from './DevTools';
 import { buildFeatureBboxIndex, findDauid } from './geo-utils';
 import type { AnalyzedEncounter, MapMetric, VisualizationType } from '@/lib/types';
 
@@ -136,7 +137,7 @@ export default function MapView() {
 
   const [metric, setMetric] = useState<MapMetric>('density');
   const [selectedKeys, setSelectedKeys] = useState<string[]>([]);
-  const [vizType, setVizType] = useState<VisualizationType>('neighbourhood');
+  const [vizType, setVizType] = useState<VisualizationType>('da');
   const [mapStyleId, setMapStyleId] = useState('dark');
 
   const [neighbourhoodGeoJson, setNeighbourhoodGeoJson] = useState<GeoJSON.FeatureCollection | null>(null);
@@ -473,6 +474,8 @@ export default function MapView() {
           </div>
         </div>
       )}
+
+      <DevTools />
 
       {/* ── Hover tooltip ───────────────────────────────────────────────── */}
       {hover && (
