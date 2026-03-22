@@ -6,10 +6,8 @@ import 'leaflet/dist/leaflet.css';
 import type { PathOptions } from 'leaflet';
 
 import { useEncounterData } from './data';
-import { aggregateByFsa } from './aggregations';
 import { MAP_STYLES, DEFAULT_VIEW_STATE } from './config';
 import { Sidebar } from './Sidebar';
-import { FSA_TO_NEIGHBORHOOD } from '@/lib/fsa-to-neighborhood';
 import { buildFeatureBboxIndex, findDauid } from './geo-utils';
 import type { MapMetric, VisualizationType } from '@/lib/types';
 
@@ -64,10 +62,15 @@ export default function MapView() {
     fetch('/data/vancouver-das.geojson').then((r) => r.json()).then(setDaGeoJson).catch(() => null);
   }, []);
 
-  // ── Pre-compute DA bbox index (once per GeoJSON load) ────────────────────
+  // ── Pre-compute bbox indexes (once per GeoJSON load) ─────────────────────
   const daIndex = useMemo(
     () => (daGeoJson ? buildFeatureBboxIndex(daGeoJson.features, 'DAUID') : []),
     [daGeoJson],
+  );
+
+  const neighbourhoodIndex = useMemo(
+    () => (neighbourhoodGeoJson ? buildFeatureBboxIndex(neighbourhoodGeoJson.features, 'name') : []),
+    [neighbourhoodGeoJson],
   );
 
   // ── Pre-assign each encounter to a DAUID (expensive, runs once) ──────────
@@ -82,6 +85,19 @@ export default function MapView() {
     }
     return map;
   }, [encounters, daIndex]);
+
+  // ── Pre-assign each encounter to a neighbourhood name ────────────────────
+  const encounterNeighbourhoodMap = useMemo(() => {
+    if (!neighbourhoodIndex.length) return new Map<string, string>();
+    const map = new Map<string, string>();
+    for (const enc of encounters) {
+      const { lat, lng } = enc.geographicData ?? {};
+      if (lat == null || lng == null) continue;
+      const name = findDauid([lng, lat], neighbourhoodIndex);
+      if (name) map.set(enc.analyzedEncounterRn, name);
+    }
+    return map;
+  }, [encounters, neighbourhoodIndex]);
 
   // ── Filter helper ────────────────────────────────────────────────────────
   const activeKeys = useMemo(
@@ -113,19 +129,36 @@ export default function MapView() {
     const counts = new Map<string, number>();
     for (const enc of encounters) {
       if (!encounterMatches(enc)) continue;
-      const fsa = enc.geographicData?.postalCodePrefix;
-      if (!fsa) continue;
-      const nbhd = FSA_TO_NEIGHBORHOOD[fsa as keyof typeof FSA_TO_NEIGHBORHOOD];
-      if (nbhd) counts.set(nbhd, (counts.get(nbhd) ?? 0) + 1);
+      const name = encounterNeighbourhoodMap.get(enc.analyzedEncounterRn);
+      if (name) counts.set(name, (counts.get(name) ?? 0) + 1);
     }
     return counts;
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [encounters, metric, activeKeys]);
+  }, [encounters, encounterNeighbourhoodMap, metric, activeKeys]);
 
-  const fsaAggregates = useMemo(
-    () => aggregateByFsa(encounters, metric, selectedKeys.length ? selectedKeys : undefined),
-    [encounters, metric, selectedKeys],
-  );
+  // Bubble view: aggregate by neighbourhood, position at geo_point_2d centroid
+  const bubbleAggregates = useMemo(() => {
+    if (!neighbourhoodGeoJson) return [];
+    const counts = new Map<string, number>();
+    for (const enc of encounters) {
+      if (!encounterMatches(enc)) continue;
+      const name = encounterNeighbourhoodMap.get(enc.analyzedEncounterRn);
+      if (name) counts.set(name, (counts.get(name) ?? 0) + 1);
+    }
+    const centroids = new Map<string, { lat: number; lng: number }>();
+    for (const f of neighbourhoodGeoJson.features) {
+      const name = f.properties?.name as string;
+      const pt = f.properties?.geo_point_2d as { lon: number; lat: number } | undefined;
+      if (name && pt) centroids.set(name, { lat: pt.lat, lng: pt.lon });
+    }
+    return Array.from(counts.entries())
+      .map(([name, count]) => {
+        const c = centroids.get(name);
+        return c ? { name, lat: c.lat, lng: c.lng, count } : null;
+      })
+      .filter((x): x is { name: string; lat: number; lng: number; count: number } => x !== null);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [encounters, encounterNeighbourhoodMap, neighbourhoodGeoJson, metric, activeKeys]);
 
   // ── Dynamic filter keys derived from real encounter data ─────────────────
 
@@ -162,12 +195,12 @@ export default function MapView() {
   const totalCount = useMemo(() => {
     if (vizType === 'da') return [...daCounts.values()].reduce((s, c) => s + c, 0);
     if (vizType === 'neighbourhood') return [...neighbourhoodCounts.values()].reduce((s, c) => s + c, 0);
-    return fsaAggregates.reduce((s, d) => s + d.count, 0);
-  }, [vizType, daCounts, neighbourhoodCounts, fsaAggregates]);
+    return bubbleAggregates.reduce((s, d) => s + d.count, 0);
+  }, [vizType, daCounts, neighbourhoodCounts, bubbleAggregates]);
 
   const maxDa = useMemo(() => Math.max(1, ...daCounts.values()), [daCounts]);
   const maxNbhd = useMemo(() => Math.max(1, ...neighbourhoodCounts.values()), [neighbourhoodCounts]);
-  const maxBubble = useMemo(() => Math.max(1, ...fsaAggregates.map((d) => d.count)), [fsaAggregates]);
+  const maxBubble = useMemo(() => Math.max(1, ...bubbleAggregates.map((d) => d.count)), [bubbleAggregates]);
 
   // ── GeoJSON style callbacks ───────────────────────────────────────────────
 
@@ -255,11 +288,11 @@ export default function MapView() {
 
         {/* ── Bubble map ───────────────────────────────────────────────── */}
         {vizType === 'bubble' &&
-          fsaAggregates.map((d) => {
+          bubbleAggregates.map((d) => {
             const t = Math.sqrt(d.count / maxBubble);
             return (
               <CircleMarker
-                key={d.fsa}
+                key={d.name}
                 center={[d.lat, d.lng]}
                 radius={Math.max(5, t * 36)}
                 pathOptions={{
@@ -273,7 +306,7 @@ export default function MapView() {
                     const rect = containerRef.current?.getBoundingClientRect();
                     if (!rect) return;
                     setHover({
-                      name: d.fsa,
+                      name: d.name,
                       count: d.count,
                       x: e.originalEvent.clientX - rect.left,
                       y: e.originalEvent.clientY - rect.top,

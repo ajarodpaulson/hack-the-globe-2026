@@ -14,9 +14,8 @@ export type BiographicFactors = {
 };
 
 export type GeographicData = {
-  postalCodePrefix: string;
-  lat?: number;
-  lng?: number;
+  lat: number;
+  lng: number;
 };
 
 export type AnalyzedEncounter = {
@@ -31,9 +30,3 @@ export type MapMetric = 'density' | 'healthIssue' | 'determinant';
 
 export type VisualizationType = 'da' | 'neighbourhood' | 'bubble';
 
-export type FsaAggregate = {
-  fsa: string;
-  lat: number;
-  lng: number;
-  count: number;
-};

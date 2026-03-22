@@ -319,7 +319,7 @@ function generateEncounters(): AnalyzedEncounter[] {
 
     encounters.push({
       analyzedEncounterRn: `ENC-${String(seq).padStart(4, '0')}`,
-      geographicData: { postalCodePrefix: zone.fsa, lat, lng },
+      geographicData: { lat, lng },
       biographicFactors: {
         ageRange:         pick(AGE_RANGES, rng),
         gender:           pickWeighted(GENDERS, rng),
